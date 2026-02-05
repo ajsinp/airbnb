@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "houseName": "Centurian Park Terrace Homes ",
+    "price": "1000",
+    "location": "Noida",
+    "rating": "4.8",
+    "photoUrl": "/images/house1.png"
+  },
+  {
+    "id": "2",
+    "houseName": "Gaur City",
+    "price": "1200",
+    "location": "Noida",
+    "rating": "4.6",
+    "photoUrl": "/images/house2.png"
+  },
+  {
+    "houseName": "Summer Home",
+    "price": "1300",
+    "location": "Delhi",
+    "rating": "4.9",
+    "photoUrl": "/images/house3.png",
+    "id": "0.7155628288024067"
+  }
+]
