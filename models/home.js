@@ -1,38 +1,19 @@
-const fs = require("fs");
-const path = require("path");
-const rootDir = require("../utils/pathUtil");
-const homeDataPath = path.join(rootDir, "data", "homes.json");
+const mongoose = require("mongoose");
+const favourites = require("./favourites");
 
+const homeSchema = mongoose.Schema({
+  houseName: { type: String, required: true },
+  price: { type: String, required: true },
+  location: { type: String, required: true },
+  rating: { type: String, required: true },
+  photoUrl: String,
+  description: String,
+});
 
-module.exports = class Home {
-  constructor(houseName, price, location, rating, photoUrl) {
-    this.houseName = houseName;
-    this.price = price;
-    this.location = location;
-    this.rating = rating;
-    this.photoUrl = photoUrl;
-  }
-  save() {
-    this.id=Math.random().toString();
-    Home.fetchAll((registeredHomes) => {
-      registeredHomes.push(this);
-      fs.writeFile(homeDataPath, JSON.stringify(registeredHomes), (error) => {
-        console.log("File writing concluded", error);
-      });
-    });
-  }
+homeSchema.pre('findOneAndDelete', async function(){
+  console.log("pre hook before deleting")
+  const homeId = this.getQuery()._id;
+  await favourites.deleteMany({houseId : homeId});
 
-  static fetchAll(callback) {
-    
-    fs.readFile(homeDataPath, (err, data) => {
-      callback(!err ? JSON.parse(data) : []);
-    });
-  }
-
-  static findById(homeId, callback){
-    this.fetchAll(homes =>{
-      const homeFound = homes.find(home => home.id === homeId);
-      callback(homeFound);
-    })
-  }
-};
+})
+module.exports = mongoose.model('Home',homeSchema);
