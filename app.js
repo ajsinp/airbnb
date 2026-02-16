@@ -1,3 +1,6 @@
+require("dotenv").config();
+
+
 //Core Module
 const path = require("path");
 
@@ -5,7 +8,7 @@ const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
-const DB_PATH = "mongodb+srv://root:root@kgcluster.zmz6zig.mongodb.net/airbnb";
+const DB_PATH = process.env.MONGO_URI;
 
 // Local Module
 const storeRouter = require("./routes/storeRouter");
@@ -52,7 +55,7 @@ app.use(express.static(path.join(rootDir, "public")));
 
 app.use(errorsControllers.pageNotFound);
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 mongoose
   .connect(DB_PATH)
