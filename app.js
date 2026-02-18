@@ -95,12 +95,12 @@ app.use(errorsControllers.pageNotFound);
 mongoose
   .connect(DB_PATH)
   .then(() => {
-    console.log("✅ Connected to MongoDB");
+    console.log("Connected to MongoDB");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("❌ Error connecting to MongoDB:", err);
+    console.error("Error connecting to MongoDB:", err);
   });

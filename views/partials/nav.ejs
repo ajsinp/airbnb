@@ -43,19 +43,27 @@
           </a>
         </li>
         <% } %>
-          <li>
-            <% if(!isLoggedIn) { %>
+
+          <% if(!isLoggedIn) { %>
+            <li>
+              <a href="/signup" class="hover:bg-red-400' py-2 px-4 rounded transition duration-300 block">
+                SignUp
+              </a>
+            </li>
+            <li>
               <a href="/login" class="hover:bg-red-400' py-2 px-4 rounded transition duration-300 block">
                 Login
               </a>
-              <% }else {%>
+            </li>
+            <% }else {%>
+              <li>
                 <form action="/logout" method="POST">
                   <button type="submit" class="hover:bg-red-400 py-2 px-4 rounded transition duration-300">
                     Logout
                   </button>
                 </form>
-                <% } %>
-          </li>
+              </li>
+              <% } %>
     </ul>
   </nav>
 </header>
