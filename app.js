@@ -81,7 +81,11 @@ app.use("/host", hostRouter);
 
 // Root Route (VERY IMPORTANT for Render)
 app.get("/", (req, res) => {
-  res.redirect("/login");
+  if (req.session.isLoggedIn) {
+    res.redirect("/host/host-home-list");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // ======================
