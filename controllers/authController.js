@@ -1,6 +1,6 @@
 const { check, validationResult } = require("express-validator");
 const User = require("../models/user");
-const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs");
 
 exports.getLogin = (req, res, next) => {
   res.render("auth/login", {
@@ -9,9 +9,8 @@ exports.getLogin = (req, res, next) => {
     isLoggedIn: false,
     errors: [],
     oldInput: {
-      email: "",
-      password: "",
-    },  
+      email: ""
+    },
   });
 };
 
@@ -95,7 +94,7 @@ exports.postSignup = [
         pageTitle: "Signup",
         currentPage: "signup",
         isLoggedIn: false,
-        errors: errors.array().map(err => err.msg),
+        errors: errors.array().map((err) => err.msg),
         oldInput: { firstName, lastName, email, userType },
       });
     }
@@ -127,9 +126,9 @@ exports.postSignup = [
   },
 ];
 
-exports.postLogin = async(req, res, next) => {
+exports.postLogin = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(422).render("auth/login", {
       pageTitle: "Login",
@@ -139,9 +138,20 @@ exports.postLogin = async(req, res, next) => {
       oldInput: { email },
     });
   }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(422).render("auth/login", {
+      pageTitle: "Login",
+      currentPage: "login",
+      isLoggedIn: false,
+      errors: ["Invalid Password"],
+      oldInput: { email },
+    });
+  }
+
   req.session.isLoggedIn = true;
-  //   res.cookie("isLoggedIn", true);
-  // req.isLoggedIn = true;
+  // req.session.user = user;
+  // await req.session.save();
   res.redirect("/");
 };
 

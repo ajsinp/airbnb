@@ -1,110 +1,66 @@
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+require("dotenv").config({ quiet: true });
+// Core Module
+const path = require('path');
 
 
-// Core Modules
-const path = require("path");
+// External Module
+const express = require('express');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
+const DB_PATH = process.env.MONGO_URI;
 
-// External Modules
-const express = require("express");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
-const mongoose = require("mongoose");
-
-// Local Modules
-const storeRouter = require("./routes/storeRouter");
-const hostRouter = require("./routes/hostRouter");
-const authRouter = require("./routes/authRouter");
+//Local Module
+const storeRouter = require("./routes/storeRouter")
+const hostRouter = require("./routes/hostRouter")
+const authRouter = require("./routes/authRouter")
 const rootDir = require("./utils/pathUtil");
-const errorsControllers = require("./controllers/errors");
+const errorsController = require("./controllers/errors");
+const { default: mongoose } = require('mongoose');
 
 const app = express();
 
-// ======================
-// ENV VARIABLES
-// ======================
-const DB_PATH = process.env.MONGO_URI;
-const PORT = process.env.PORT || 3001;
+app.set('view engine', 'ejs');
+app.set('views', 'views');
 
-// ======================
-// VIEW ENGINE
-// ======================
-app.set("view engine", "ejs");
-app.set("views", "views");
-
-// ======================
-// SESSION STORE
-// ======================
 const store = new MongoDBStore({
   uri: DB_PATH,
-  collection: "sessions",
+  collection: 'sessions'
 });
 
-// ======================
-// MIDDLEWARE
-// ======================
-app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(rootDir, "public")));
+app.use(express.urlencoded());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "SuperSecretKey",
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-  })
-);
-
-// Custom Middleware
 app.use((req, res, next) => {
-  req.isLoggedIn = req.session.isLoggedIn;
+  req.isLoggedIn = req.session.isLoggedIn
   next();
-});
+})
 
-// ======================
-// ROUTES
-// ======================
-app.use(authRouter);
+app.use(authRouter)
 app.use(storeRouter);
-
-// Protect /host routes
 app.use("/host", (req, res, next) => {
-  if (req.isLoggedIn) {
+  if (req.session.isLoggedIn) {
     next();
   } else {
     res.redirect("/login");
   }
 });
-
 app.use("/host", hostRouter);
 
-// Root Route (VERY IMPORTANT for Render)
-app.get("/", (req, res) => {
-  if (req.session.isLoggedIn) {
-    res.redirect("/host/host-home-list");
-  } else {
-    res.redirect("/login");
-  }
-});
+app.use(express.static(path.join(rootDir, 'public')))
 
-// ======================
-// 404 ERROR
-// ======================
-app.use(errorsControllers.pageNotFound);
+app.use(errorsController.pageNotFound);
 
-// ======================
-// DATABASE CONNECTION
-// ======================
-mongoose
-  .connect(DB_PATH)
-  .then(() => {
-    console.log("Connected to MongoDB");
+const PORT = process.env.PORT || 3001;
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
+mongoose.connect(DB_PATH).then(() => {
+  console.log('Connected to Mongo');
+  app.listen(PORT, () => {
+    console.log(`Server running on address http://localhost:${PORT}`);
   });
+}).catch(err => {
+  console.log('Error while connecting to Mongo: ', err);
+});
