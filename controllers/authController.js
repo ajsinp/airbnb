@@ -11,6 +11,7 @@ exports.getLogin = (req, res, next) => {
     oldInput: {
       email: ""
     },
+    user:{},
   });
 };
 
@@ -27,6 +28,7 @@ exports.getSignup = (req, res, next) => {
       password: "",
       userType: "",
     },
+    user:{},
   });
 };
 
@@ -96,6 +98,7 @@ exports.postSignup = [
         isLoggedIn: false,
         errors: errors.array().map((err) => err.msg),
         oldInput: { firstName, lastName, email, userType },
+        user:{},
       });
     }
 
@@ -121,6 +124,7 @@ exports.postSignup = [
           isLoggedIn: false,
           errors: [err.message],
           oldInput: { firstName, lastName, email, userType },
+          user:{},
         });
       });
   },
@@ -128,31 +132,57 @@ exports.postSignup = [
 
 exports.postLogin = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(422).render("auth/login", {
-      pageTitle: "Login",
-      currentPage: "login",
-      isLoggedIn: false,
-      errors: ["User does not exists"],
-      oldInput: { email },
-    });
-  }
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(422).render("auth/login", {
-      pageTitle: "Login",
-      currentPage: "login",
-      isLoggedIn: false,
-      errors: ["Invalid Password"],
-      oldInput: { email },
-    });
-  }
 
-  req.session.isLoggedIn = true;
-  // req.session.user = user;
-  // await req.session.save();
-  res.redirect("/");
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(422).render("auth/login", {
+        pageTitle: "Login",
+        currentPage: "login",
+        isLoggedIn: false,
+        errors: ["User does not exist"],
+        oldInput: { email },
+        user: {},
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(422).render("auth/login", {
+        pageTitle: "Login",
+        currentPage: "login",
+        isLoggedIn: false,
+        errors: ["Invalid Password"],
+        oldInput: { email },
+        user: {},
+      });
+    }
+
+    // Store only plain object
+    req.session.isLoggedIn = true;
+    req.session.user = {
+      _id: user._id.toString(),
+      firstName: user.firstName,
+      email: user.email,
+      userType: user.userType,
+      favourites: user.favourites || []
+    };
+
+    req.session.save(() => {
+      if (user.userType === "host") {
+        return res.redirect("/");
+      } else if (user.userType === "guest") {
+        return res.redirect("/");       
+      } else {
+        return res.redirect("/");      
+      }
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.redirect("/login");
+  }
 };
 
 exports.postLogout = (req, res, next) => {

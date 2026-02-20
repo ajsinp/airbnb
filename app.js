@@ -1,12 +1,11 @@
-require("dotenv").config({ quiet: true });
+require("dotenv").config();
 // Core Module
 const path = require('path');
-
 
 // External Module
 const express = require('express');
 const session = require('express-session');
-const MongoDBStore = require('connect-mongodb-session')(session);
+const MongoStore = require("connect-mongo").default;
 const DB_PATH = process.env.MONGO_URI;
 
 //Local Module
@@ -22,39 +21,47 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
-const store = new MongoDBStore({
-  uri: DB_PATH,
-  collection: 'sessions'
-});
 
 app.use(express.urlencoded());
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions"
+    })
+  })
+);
 
 app.use((req, res, next) => {
-  req.isLoggedIn = req.session.isLoggedIn
+  res.locals.isLoggedIn = req.session?.isLoggedIn || false;
+  res.locals.user = req.session?.user || null;
   next();
-})
+});
 
 app.use(authRouter)
 app.use(storeRouter);
+
 app.use("/host", (req, res, next) => {
-  if (req.session.isLoggedIn) {
-    next();
-  } else {
-    res.redirect("/login");
+  if (
+    req.session.isLoggedIn &&
+    req.session.user &&
+    req.session.user.userType === "host"
+  ) {
+    return next();
   }
+  return res.redirect("/");
 });
+
 app.use("/host", hostRouter);
 
 app.use(express.static(path.join(rootDir, 'public')))
 
 app.use(errorsController.pageNotFound);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 mongoose.connect(DB_PATH).then(() => {
   console.log('Connected to Mongo');
